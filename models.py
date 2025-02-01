@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
+from app import db
+# Import db directly from SQLAlchemy instead of app.py
 
-db = SQLAlchemy()
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -10,6 +11,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(50), default="voter")
+    is_approved = db.Column(db.Boolean, default=False)
 
     # Relationship to votes
     votes = db.relationship('Vote', backref='voter', cascade="all, delete", lazy=True)

@@ -14,16 +14,18 @@ def register():
     if not data or not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
 
+    # Check if email is already taken
     if User.query.filter_by(email=data['email']).first():
         return jsonify({"error": "Email is already registered"}), 400
 
+    # Hash the password before storing
     hashed_password = generate_password_hash(data['password'])
     new_user = User(
         name=data['name'],
         email=data['email'],
         password=hashed_password,
         role=data.get('role', 'voter'),
-        is_approved=True
+        is_approved=False
     )
 
     try:
@@ -44,11 +46,13 @@ def login():
     if not data or not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
 
+    # Find the user by email
     user = User.query.filter_by(email=data['email']).first()
     if user and check_password_hash(user.password, data['password']):
         if not user.is_approved:
             return jsonify({'message': 'Your account is not approved yet.'}), 403
 
+        # Generate JWT token for user
         token = create_access_token(identity=user.id)
         return jsonify({
             'token': token,
@@ -58,7 +62,7 @@ def login():
 
     return jsonify({'message': 'Invalid email or password'}), 401
 
-# Get all users
+# Get all users (admin only)
 @user_bp.route('/users', methods=['GET'])
 @jwt_required()
 def get_users():
@@ -67,6 +71,7 @@ def get_users():
     if admin.role != 'admin':
         return jsonify({"message": "Unauthorized access"}), 403
 
+    # Fetch all users
     users = User.query.all()
     return jsonify([{
         "id": user.id,
@@ -76,7 +81,7 @@ def get_users():
         "is_approved": user.is_approved
     } for user in users]), 200
 
-# Update user details
+# Update user details (admin only)
 @user_bp.route('/user/<int:user_id>', methods=['PUT'])
 @jwt_required()
 def update_user(user_id):
@@ -90,6 +95,7 @@ def update_user(user_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # Update fields
     user.name = data.get('name', user.name)
     user.email = data.get('email', user.email)
 
@@ -109,7 +115,7 @@ def update_user(user_id):
 
     return jsonify({"message": "User updated successfully"}), 200
 
-# Delete a user
+# Delete a user (admin only)
 @user_bp.route('/user/<int:user_id>', methods=['DELETE'])
 @jwt_required()
 def delete_user(user_id):
@@ -126,7 +132,7 @@ def delete_user(user_id):
     db.session.commit()
     return jsonify({"message": "User deleted successfully"}), 200
 
-# Approve a voter
+# Approve a voter (admin only)
 @user_bp.route('/approve_voter/<int:user_id>', methods=['PATCH'])
 @jwt_required()
 def approve_voter(user_id):
@@ -139,6 +145,7 @@ def approve_voter(user_id):
     if not user:
         return jsonify({'message': 'User not found'}), 404
 
+    # Approve the voter
     user.is_approved = True
     db.session.commit()
     return jsonify({'message': 'Voter approved successfully.'}), 200
