@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required, get_jwt_identity  # For JWT authentication
 from models import db, Election
 
 election_bp = Blueprint('election', __name__)
 
 # CREATE: Add new election
 @election_bp.route('/election', methods=['POST'])
+@jwt_required()  # Only authorized users (admins) should be able to create elections
 def create_election():
     data = request.json
     required_fields = ['title', 'start_date', 'end_date']
@@ -33,18 +35,9 @@ def create_election():
         return jsonify({"error": "An error occurred while creating the election", "details": str(e)}), 500
 
 
-# # READ: Get candidates for a specific election
-# @election_bp.route('/candidates/<int:election_id>', methods=['GET'])
-# def get_candidates(election_id):
-#     candidates = Candidate.query.filter_by(election_id=election_id).all()
-#     return jsonify([{
-#         "id": candidate.id,
-#         "name": candidate.name,
-#         "election_id": candidate.election_id
-#     } for candidate in candidates]), 200
-
 # READ: Get all elections
 @election_bp.route('/elections', methods=['GET'])
+@jwt_required()  # Protect this endpoint with JWT (if necessary)
 def get_elections():
     elections = Election.query.all()
     return jsonify([{
@@ -56,8 +49,10 @@ def get_elections():
         "is_active": election.is_active
     } for election in elections]), 200
 
+
 # UPDATE: Update election details
 @election_bp.route('/election/<int:election_id>', methods=['PUT'])
+@jwt_required()  # Protect this endpoint with JWT (if necessary)
 def update_election(election_id):
     data = request.json
     election = Election.query.get(election_id)
@@ -73,8 +68,10 @@ def update_election(election_id):
     db.session.commit()
     return jsonify({"message": "Election updated successfully"}), 200
 
+
 # DELETE: Delete an election
 @election_bp.route('/election/<int:election_id>', methods=['DELETE'])
+@jwt_required()  # Protect this endpoint with JWT (if necessary)
 def delete_election(election_id):
     election = Election.query.get(election_id)
     if not election:

@@ -1,7 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from app import db
-# Import db directly from SQLAlchemy instead of app.py
-
+from extensions import db
 
 class User(db.Model):
     __tablename__ = 'users'
