@@ -2,10 +2,9 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from extensions import db  # Ensure db is imported here before using it
+from extensions import db  
 
 def create_app():
-    # Initialize Flask app
     app = Flask(__name__)
 
     # Configuration settings
@@ -38,8 +37,8 @@ def create_app():
 
     return app
 
+app = create_app()
 # Run the app
 if __name__ == '__main__':
-    app = create_app()
     app.run(debug=True)
 
